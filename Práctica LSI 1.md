@@ -85,10 +85,16 @@ Ahora que tenemos la última versión de Debian 10, es cuestión de cambiar los 
 apt full-upgrade
 ```
 
-y hacer:
+hacer:
 
 ```shell
 apt upgrade
+```
+
+y:
+
+```shell
+reboot
 ```
 
 Para actualizar a Debian 11 y Debian 12.
@@ -135,7 +141,7 @@ sudo visudo
 
 Y añadimos debajo de root:
 
-```sh
+```bash
 lsi    ALL=(ALL) ALL
 ```
 
@@ -169,6 +175,29 @@ journalctl -u systemd-timesyncd.service
 En el log observamos que realiza una serie de conexiones a una pool de direcciones para NTP, por lo que concluinos que es un daemon para sincronización del reloj por NTP (Network Time Protocol)
 ##### f) *Identifique y cambie los principales parámetros de su segundo interface de red (ens34). Configure un segundo interface lógico. Al terminar, déjelo como estaba.*
 
+Para ver la configuración de ens34:
+
+```shell
+ifconfig ens34
+```
+
+Para cambiar ens34:
+
+```shell
+ifconfig ens34 down
+ifconfig ens34 mtu 1200 #tamaño máximo paquetes de datos
+ifconfig ens34 hw ether 00:1e:2e:b5:18:07 #dirección MAC
+ifconfig ens34 10.11.50.51 netmask 255.255.254.0 #dirección ip + máscara
+ifconfig ens34 up
+```
+
+Para crear un interfaz lógico hacemos un :
+
+```shell
+ifconfig ens34:0 192.168.1.1 netmask 255.255.255.0
+ifconfig ens34:0 up
+```
+
 ##### g) *¿Qué rutas (routing) están definidas en su sistema?. Incluya una nueva ruta estática a una determinada red.*
 
 Para acceder a la tabla de enrutamiento usamos:
@@ -197,24 +226,24 @@ systemctl list-unit-files --type=service --state=enabled
 
 Al final borramos los siguientes servicios:
 
-> apparmor.service:
-> anacron.service
-> accounts-daemon.service
-> avahi-daemon.service
-> bluetooth.service
-> cron.service
-> cups.service
-> cups-browsed.service
-> e2scrub_reap.service
-> ModemManager.service
-> open-vm-tools.service
-> power-profiles-daemon.service
-> rtkit-daemon.service
-> ssa.service
-> switcheroo-control.service
+> apparmor.service -> Módulo de seguridad del kernel (perfiles de seguridad)
+> anacron.service -> tareas rutinarias (como cron). No las vamos a usar de momento
+> accounts-daemon.service -> Gestión de cuentas de GNOME. Riesgo de seguridad
+> avahi-daemon.service -> Simplificación de configuración de red. Abre puertos
+> bluetooth.service -> No vamos a usar bluetooth
+> cron.service -> tareas rutinarias. No las vamos a usar de momento
+> cups.service -> impresoras
+> cups-browsed.service -> impresoras
+> e2scrub_reap.service -> snapshots. Llama a un servicio que no está en la máquina para arreglar los problemas que detecta
+> ModemManager.service -> Gestiones de Modem de banda ancha
+> open-vm-tools.service -> virtualización. No vamos a usar mv dentro de una mv
+> power-profiles-daemon.service -> perfiles de batería. Está conectado directamente a corriente
+> rtkit-daemon.service -> sincronización en tiempo real. Principalmente para audio
+> ssa.service -> servicio bad
+> switcheroo-control.service -> intercambiar entre dos GPUs
 > udisks2.service
-> vgauth.service
-> wpa_supplicant.service
+> vgauth.service -> también virtualización
+> wpa_supplicant.service -> Redes móviles
 ##### i) *Diseñe y configure un pequeño “script” y defina la correspondiente unidad de tipo service para que se ejecute en el proceso de botado de su máquina.*
 
 Creamos en /home/lsi/Escritorio/servicescript/memoryctrl.sh con el siguiente contenido:
@@ -321,9 +350,11 @@ ALL: ALL: twist
 y en /etc/hosts.allow:
 
 ```script
-sshd: 127.0.0.1, 10.11.49.48, 10.11.51.48
+sshd: 127.0.0.1, 10.11.49.48, 10.11.51.48 #localhost e ip compañero
 sshd: 10.20. #EDUROAM
 sshd: 10.30.9.151 #VPN
+sshd: ::1 #localhost ipv6
+sshd: 2002:0a0b:3130::1 #ipv6 compañero
 ```
 
 ##### m) *Existen múltiples paquetes para la gestión de logs (syslog, syslog-ng, rsyslog). Utilizando el rsyslog pruebe su sistema de log local. Pruebe también el journald.*
@@ -343,7 +374,7 @@ Para crear el túnel editamos el archivo /etc/hosts/interfaces y añadimos:
 auto ________________ 6to4
 
 ------
-------  #datos de las direcciones estáticas
+------  #datos de las direcciones estáticas (los otros interfaces)
 ------
 iface 6to4 inet6 v4tunnel
 address 2002:0a0b:312f::1
@@ -355,6 +386,43 @@ local 10.11.49.47
 ## Parte 2
 
 ##### a) *En colaboración con otro alumno de prácticas, configure un servidor y un cliente NTPSec básico.*
+
+Sustituimos ntp por ntpsec:
+
+```shell
+apt install ntpdate ntpsec
+```
+
+y comprobamos que el servicio esté activo:
+
+```shell
+systemctl enable ntpsec
+systemctl start ntpsec
+systemctl status ntpsec
+```
+
+A continuación editamos el archivo /etc/ntpsec/ntp.conf
+
+```bash
+#para servidor
+
+#para cliente
+```
+
+Para comprobar los servidores ntp a los que la máquina está conectada usamos el comando:
+
+```shell
+ntpq -p
+```
+
+Está conectado al servidor si hay un asterisco al lado de la ip.
+
+Y para alterar y comprobar la fecha de la máquina:
+
+```shell
+date
+date --set "YYYY:MM:DD HH:mm:ss"
+```
 
 ##### b) *Cruzando los dos equipos anteriores, configure con rsyslog un servidor y un cliente de logs.*
 
