@@ -48,9 +48,25 @@ passwd
 
 Después eliminamos avahi-daemon.service, avahi-daemon.socket y ModemManager.service, para eliminar vulnerabilidades a costa de perder facilidades de red.
 
-A continuación configuramos nuestra dirección estática para evitar DHCP spoofing en /etc/hosts/interfaces
+A continuación configuramos nuestra dirección estática para evitar DHCP spoofing en **/etc/network/interfaces**:
+
+```bash
+auto lo ens33 ens34
+iface ens33 inet static
+address 10.11.49.47
+netmask 255.255.254.0
+broadcast 10.11.49.255
+network 10.11.48.0
+gateway 10.11.48.1
+iface ens34 inet static
+address 10.11.51.47
+netmask 255.255.254.0
+broadcast 10.11.51.255
+network 10.11.50.0
+```
 
 Al buscar información sobre los archivos de configuración básica obtenemos lo siguiente:
+
 
 ##### b) *¿Qué distro y versión tiene la máquina inicialmente entregada?. Actualice su máquina a la última versión estable disponible.*
 
@@ -368,7 +384,7 @@ apt install rsyslog
 
 ##### n) *Configure IPv6 6to4 y pruebe ping6 y ssh sobre dicho protocolo. ¿Qué hace su tcp-wrapper en las conexiones ssh en IPv6? Modifique su tcp-wapper siguiendo el criterio del apartado h). ¿Necesita IPv6?. ¿Cómo se deshabilita IPv6 en su equipo?*
 
-Para crear el túnel editamos el archivo /etc/hosts/interfaces y añadimos:
+Para crear el túnel editamos el archivo **/etc/hosts/interfaces** y añadimos:
 
 ```shell
 auto ________________ 6to4
@@ -383,6 +399,7 @@ endpoint any
 local 10.11.49.47
 ```
 
+Para deshabliltar IPv6, en **/etc/sysctl.conf** añadimos:
 ## Parte 2
 
 ##### a) *En colaboración con otro alumno de prácticas, configure un servidor y un cliente NTPSec básico.*
@@ -401,7 +418,7 @@ systemctl start ntpsec
 systemctl status ntpsec
 ```
 
-A continuación editamos el archivo /etc/ntpsec/ntp.conf
+A continuación editamos el archivo **/etc/ntpsec/ntp.conf**
 
 ```bash
 #para servidor
@@ -426,14 +443,70 @@ date --set "YYYY:MM:DD HH:mm:ss"
 
 ##### b) *Cruzando los dos equipos anteriores, configure con rsyslog un servidor y un cliente de logs.*
 
+Teniendo rsyslog instalado
+
 ##### c) *Haga todo tipo de propuestas sobre los siguientes aspectos.: ¿Qué problemas de seguridad identifica en los dos apartados anteriores?. ¿Cómo podría solucionar los problemas identificados?*
+
+Problemas de los servidores:
 
 ##### d) *En la plataforma de virtualización corren, entre otros equipos, más de 200 máquinas virtuales para LSI. Como los recursos son limitados, y el disco duro también, identifique todas aquellas acciones que pueda hacer para reducir el espacio de disco ocupado.*
 
+Para obtener el espacio de disco:
+
+```shell
+df -h
+```
+
+Para limpiar espacio:
+
+```shell
+apt clean
+apt --purge autoremove
+```
+
+Borramos man:
+
+```shell
+apt remove --purge man-db
+apt remove --purge dbhelper
+```
+
+También borramos libreoffice, los kernels viejos, las versiones antiguas de python y los logs repetidos en /var/log/
 ##### e) *Instale el SIEM splunk en su máquina. Sobre dicha plataforma haga los siguientes puntos:*
+
 1. Genere una query que visualice los logs internos del splunk
 2. Cargué el fichero /var/log/apache2/access.log y el journald del sistema y visualícelos.
 3. Obtenga las IPs de los equipos que se han conectado a su servidor web (pruebe a generar algún tipo de gráfico de visualización), así como las IPs que se han conectado un determinado día de un determinado mes.
 4. Trate de obtener el país y región origen de las IPs que se han conectado a su servidor web y si posible sus coordenadas geográficas.
 5. Obtenga los hosts origen, sources y sourcestypes.
 6. ¿Cómo podría hacer que splunk haga de servidor de log de su cliente
+
+Instalamos los paquetes necesarios:
+
+```shell
+apt install curl
+apt install apache2
+```
+
+Y desempaquetamos el paquete que descargamos del teams de la asignatura de la versión más reciente de Splunk
+
+A continuación editamos el archivo **/opt/splunk/etc/system/default/server.conf**:
+
+```bash
+minspacefree=5000 #cambiar por 500
+```
+
+Al final ejecutamos lo siguiente:
+
+```shell
+/opt/splunk/bin/splunk enable boot-start #para que se inicie en arranque, o
+/etc/init.d/splunk start #para iniciar el servicio solo
+```
+
+Por otro lado, en un navegador conectado mediante la VPN, nos conectamos en:
+
+```navegador
+http://10.11.49.47:8000
+```
+
+Cargamos en Splunk **/var/log/syslog** y **/var/log/apache2/access.log**
