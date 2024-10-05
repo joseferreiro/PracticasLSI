@@ -443,7 +443,19 @@ date --set "YYYY:MM:DD HH:mm:ss"
 
 ##### b) *Cruzando los dos equipos anteriores, configure con rsyslog un servidor y un cliente de logs.*
 
-Teniendo rsyslog instalado
+Teniendo rsyslog instalado.
+
+Configuración del servidor:
+
+![rsyslog-server-1](https://github.com/user-attachments/assets/37bb282a-8945-43b0-8751-52b5709c136d)
+![rsyslog-server-2](https://github.com/user-attachments/assets/52271b6f-4e7a-4cdd-8a69-6be59b45159c)
+
+Configuración del cliente:
+
+![rsyslog-client-1](https://github.com/user-attachments/assets/bcb192d8-0e70-4e0a-b0ec-d93707b63a04)
+![rsyslog-client-2](https://github.com/user-attachments/assets/b15f7630-998c-4c3a-9395-40afa39a4b7f)
+*Nota: descomentar las 2 lineas bajo el comentario "Implementación propuesta en clase" o la linea bajo el comentario "Server" y las 4 lineas antes de "RULES".*
+
 
 ##### c) *Haga todo tipo de propuestas sobre los siguientes aspectos.: ¿Qué problemas de seguridad identifica en los dos apartados anteriores?. ¿Cómo podría solucionar los problemas identificados?*
 
