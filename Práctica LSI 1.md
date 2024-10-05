@@ -454,7 +454,7 @@ Configuración del cliente:
 
 ![rsyslog-client-1](https://github.com/user-attachments/assets/bcb192d8-0e70-4e0a-b0ec-d93707b63a04)
 ![rsyslog-client-2](https://github.com/user-attachments/assets/b15f7630-998c-4c3a-9395-40afa39a4b7f)
-*Nota: descomentar las 2 lineas bajo el comentario "Implementación propuesta en clase" o la linea bajo el comentario "Server" y las 4 lineas antes de "RULES".
+*Nota: descomentar las 2 lineas bajo el comentario "Implementación propuesta en clase" o la linea bajo el comentario "Server" y las 4 lineas antes de "RULES".*
 
 
 ##### c) *Haga todo tipo de propuestas sobre los siguientes aspectos.: ¿Qué problemas de seguridad identifica en los dos apartados anteriores?. ¿Cómo podría solucionar los problemas identificados?*
