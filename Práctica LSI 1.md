@@ -346,7 +346,7 @@ systemctl enable memoryctrl.service
 Ejecutamos uno de los siguientes comandos:
 
 ```shell
-netstat -neta #solo conexiones
+netstat -nea #solo conexiones
 ```
 
 ```shell
@@ -485,11 +485,6 @@ systemctl status ntpsec
 
 A continuación editamos el archivo **/etc/ntpsec/ntp.conf**
 
-```bash
-#para servidor
-
-#para cliente
-```
 Configuración del servidor:
 
 ![ntp-server-1](https://github.com/user-attachments/assets/3e87cfea-cc9f-496b-af5a-fa6b8a657c05)
@@ -614,8 +609,20 @@ Cargamos en Splunk **/var/log/syslog** y **/var/log/apache2/access.log**
 
 Algunos comandos que podemos emplear son:
 
-```comandos_splunk
+```splunk
 source="/var/log/apache2/access.log" | table field1 | iplocation field1 | geostats count
 ```
 
 para obtener la localización.
+
+```splunk
+source="/var/log/apache2/access.log" | sourcetype=access_combined | stats count by clientip
+```
+
+para obtener las ips conectadas al servidor.
+
+```splunk
+sourcetype=access_combined | where _time>=strptime("2024-03-01 00:00:00", "%Y-%m-%d %H:%M:%S") AND _time<=strptime("2024-03-01 23:59:59", "%Y-%m-%d %H:%M:%S") | stats count by clientip
+```
+
+para las ips conectadas en un día y hora concretos.
