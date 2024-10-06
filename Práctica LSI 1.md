@@ -404,8 +404,8 @@ y en /etc/hosts.allow:
 
 ```script
 sshd: 127.0.0.1, 10.11.49.48, 10.11.51.48 #localhost e ip compañero
-sshd: 10.20. #EDUROAM
-sshd: 10.30.9.151 #VPN
+sshd: 10.20.32.0/21 #EDUROAM
+sshd: 10.30.0.0/16 #VPN
 sshd: ::1 #localhost ipv6
 sshd: 2002:0a0b:3130::1 #ipv6 compañero
 ```
@@ -457,6 +457,14 @@ net.ipv6.conf.lo.disable_ipv6 = 1
 
 y aplicamos los cambios con sysctl -p (lo mismo con los valores a 0 o las líneas comentadas para habilitar de nuevo)
 
+*Nota: en caso de temer problemas de buffer a la hora de desactivar/activar IPv6, con IPv6 activada, se hace lo siguiente:*
+
+*ifdown 6to4 (debería mostrar que la interfaz está disponible pero sin configurar)*
+
+*ip tun del 6to4 (borramos la interfaz desconfigurada)*
+
+*ifconfig -a (comprobamos que ya no aparece)*
+
 ## Parte 2
 
 ##### a) *En colaboración con otro alumno de prácticas, configure un servidor y un cliente NTPSec básico.*
@@ -482,6 +490,15 @@ A continuación editamos el archivo **/etc/ntpsec/ntp.conf**
 
 #para cliente
 ```
+Configuración del servidor:
+
+![ntp-server-1](https://github.com/user-attachments/assets/3e87cfea-cc9f-496b-af5a-fa6b8a657c05)
+![ntp-server-2](https://github.com/user-attachments/assets/dd167009-4d9c-457b-904c-8c18929fcb86)
+
+Configuración del cliente:
+
+![ntp-client-1](https://github.com/user-attachments/assets/3bbd764d-1a0b-420d-b414-8aed9744c2b2)
+![ntp-client-2](https://github.com/user-attachments/assets/496e6c5b-bdd5-4939-84bb-bf6b58cec4ed)
 
 Y reiniciamos el servicio:
 
@@ -526,6 +543,8 @@ systemctl restart rsyslog.service
 ```
 
 <strong><u><span style="font-size: 24px;">Muy Importante</span></u></strong>: Al estar desconectado del servidor (o el mismo no estar en pie), los mensajes de log se deben guardar en una cola que se manda al servidor una vez vuelva a estar operativo. <strong><u>Esos logs deben aparecer en el archivo aunque se hayan realizado en un momento en el que el servidor no estuviese activo</u></strong>**
+
+Para comprobar el funcionamiento de la cola primero desactivamos el servicio, luego el socket (como el socket tiene una dependencia con el servicio los desconectamos a la vez <strong>systemclt stop syslog syslog.socket</strong>) y mientras el servidor está desconectado, el cliente generará logs. A la hora de conectarlos, primero iniciamos el socket <strong>systemctl start syslog.socket</strong> y luego el servicio <strong>systemctl start syslog</strong>, con esto los logs que se enviaron durante la desconexión deberían aparecer en el servidor (comando tail para comprobarlo en tiempo real).
 
 ##### c) *Haga todo tipo de propuestas sobre los siguientes aspectos.: ¿Qué problemas de seguridad identifica en los dos apartados anteriores?. ¿Cómo podría solucionar los problemas identificados?*
 
