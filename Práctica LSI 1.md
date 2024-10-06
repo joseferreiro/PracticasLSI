@@ -42,7 +42,7 @@ Y hacemos lo propio con
 
 ```shell
 su
-#Contraseña
+#Metemos la contraseña
 passwd
 ```
 
@@ -67,6 +67,15 @@ network 10.11.50.0
 
 Al buscar información sobre los archivos de configuración básica obtenemos lo siguiente:
 
+> /etc/hosts relaciona nombres de host a IPs de forma local (alternativa local a DNS)
+> 
+> /etc/network/interfaces contiene la configuración de las interfaces de red local
+> 
+> /etc/resolv.conf para la resolución de nombres de dominio a IPs mediante DNS, e indica direcciones de servidores DNS
+> 
+> /etc/nsswitch.conf determina qué fuentes y en qué orden busca determinada información (nombres de host, usuarios, contraseñas...)
+> 
+> /etc/apt/sources.list contiene los repositorios de los que se obtienen los paquetes de la distribución de la máquina
 
 ##### b) *¿Qué distro y versión tiene la máquina inicialmente entregada?. Actualice su máquina a la última versión estable disponible.*
 
@@ -149,16 +158,23 @@ Con éste último comando observamos que existen distintos tipos de elementos:
 .timer
 .mount
 
-Para configurar sudo de la máquina:
+Para configurar sudo de la máquina, estando en root:
 
 ```shell
-sudo visudo
+visudo
 ```
 
 Y añadimos debajo de root:
 
 ```bash
 lsi    ALL=(ALL) ALL
+```
+
+Y así podemos ejecutar comandos que requieran servicios sin ser root con el comando _sudo_, por ejemplo:
+
+```shell
+sudo apt update
+#metemos contraseña de lsi cuando la pida
 ```
 
 ##### d) *Determine los tiempos aproximados de botado de su kernel y del userspace. Obtenga la relación de los tiempos de ejecución de los services de su sistema.*
@@ -188,7 +204,7 @@ Para obtener logs del servicio systemd-timesyncd:
 journalctl -u systemd-timesyncd.service
 ```
 
-En el log observamos que realiza una serie de conexiones a una pool de direcciones para NTP, por lo que concluinos que es un daemon para sincronización del reloj por NTP (Network Time Protocol)
+En el log observamos que realiza una serie de conexiones a una pool de direcciones para NTP, por lo que concluinos que es un daemon para sincronización del reloj por NTP (Network Time Protocol).
 ##### f) *Identifique y cambie los principales parámetros de su segundo interface de red (ens34). Configure un segundo interface lógico. Al terminar, déjelo como estaba.*
 
 Para ver la configuración de ens34:
@@ -243,22 +259,39 @@ systemctl list-unit-files --type=service --state=enabled
 Al final borramos los siguientes servicios:
 
 > apparmor.service -> Módulo de seguridad del kernel (perfiles de seguridad)
+> 
 > anacron.service -> tareas rutinarias (como cron). No las vamos a usar de momento
+> 
 > accounts-daemon.service -> Gestión de cuentas de GNOME. Riesgo de seguridad
+> 
 > avahi-daemon.service -> Simplificación de configuración de red. Abre puertos
+> 
 > bluetooth.service -> No vamos a usar bluetooth
+> 
 > cron.service -> tareas rutinarias. No las vamos a usar de momento
+> 
 > cups.service -> impresoras
+> 
 > cups-browsed.service -> impresoras
+> 
 > e2scrub_reap.service -> snapshots. Llama a un servicio que no está en la máquina para arreglar los problemas que detecta
+> 
 > ModemManager.service -> Gestiones de Modem de banda ancha
+> 
 > open-vm-tools.service -> virtualización. No vamos a usar mv dentro de una mv
+> 
 > power-profiles-daemon.service -> perfiles de batería. Está conectado directamente a corriente
+> 
 > rtkit-daemon.service -> sincronización en tiempo real. Principalmente para audio
+> 
 > ssa.service -> servicio bad
+> 
 > switcheroo-control.service -> intercambiar entre dos GPUs
+> 
 > udisks2.service
+> 
 > vgauth.service -> también virtualización
+> 
 > wpa_supplicant.service -> Redes móviles
 ##### i) *Diseñe y configure un pequeño “script” y defina la correspondiente unidad de tipo service para que se ejecute en el proceso de botado de su máquina.*
 
@@ -355,6 +388,10 @@ iftop
 iptraf #no recomendado, muy complicado
 ```
 
+```shell
+netstat -netuac #hace prácticamente lo mismo
+```
+
 ##### l) *Un primer nivel de filtrado de servicios los constituyen los tcp-wrappers. Configure el tcp-wrapper de su sistema (basado en los ficheros hosts.allow y hosts.deny) para permitir conexiones SSH a un determinado conjunto de IPs y denegar al resto. ¿Qué política general de filtrado ha aplicado?. ¿Es lo mismo el tcp-wrapper que un firewall?. Procure en este proceso no perder conectividad con su máquina. No se olvide que trabaja contra ella en remoto por ssh.*
 
 En /etc/hosts.deny ponemos:
@@ -381,6 +418,17 @@ En primer lugar instalamos rsyslog:
 apt install rsyslog
 ```
 
+Con journald podemos obtener los logs de un servicio mediante:
+
+```shell
+journalctl -u _____.service
+```
+
+Y el log de la bios usando:
+
+```shell
+journalctl -b
+```
 
 ##### n) *Configure IPv6 6to4 y pruebe ping6 y ssh sobre dicho protocolo. ¿Qué hace su tcp-wrapper en las conexiones ssh en IPv6? Modifique su tcp-wapper siguiendo el criterio del apartado h). ¿Necesita IPv6?. ¿Cómo se deshabilita IPv6 en su equipo?*
 
@@ -400,6 +448,15 @@ local 10.11.49.47
 ```
 
 Para deshabliltar IPv6, en **/etc/sysctl.conf** añadimos:
+
+```bash
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+```
+
+y aplicamos los cambios con sysctl -p (lo mismo con los valores a 0 o las líneas comentadas para habilitar de nuevo)
+
 ## Parte 2
 
 ##### a) *En colaboración con otro alumno de prácticas, configure un servidor y un cliente NTPSec básico.*
@@ -426,6 +483,12 @@ A continuación editamos el archivo **/etc/ntpsec/ntp.conf**
 #para cliente
 ```
 
+Y reiniciamos el servicio:
+
+```shell
+systemctl restart ntpsec.service
+```
+
 Para comprobar los servidores ntp a los que la máquina está conectada usamos el comando:
 
 ```shell
@@ -443,7 +506,7 @@ date --set "YYYY:MM:DD HH:mm:ss"
 
 ##### b) *Cruzando los dos equipos anteriores, configure con rsyslog un servidor y un cliente de logs.*
 
-Teniendo rsyslog instalado.
+Teniendo rsyslog instalado y activo.
 
 Configuración del servidor:
 
@@ -456,10 +519,17 @@ Configuración del cliente:
 ![rsyslog-client-2](https://github.com/user-attachments/assets/b15f7630-998c-4c3a-9395-40afa39a4b7f)
 *Nota: descomentar las 2 lineas bajo el comentario "Implementación propuesta en clase" o la linea bajo el comentario "Server" y las 4 lineas antes de "RULES".*
 
+Tras editar el archivo **/etc/rsyslog.conf** y guardar los cambios, se reinicia el servicio:
+
+```shell
+systemctl restart rsyslog.service
+```
+
+<strong><u><span style="font-size: 24px;">Muy Importante</span></u></strong>: Al estar desconectado del servidor (o el mismo no estar en pie), los mensajes de log se deben guardar en una cola que se manda al servidor una vez vuelva a estar operativo. <strong><u>Esos logs deben aparecer en el archivo aunque se hayan realizado en un momento en el que el servidor no estuviese activo</u></strong>**
 
 ##### c) *Haga todo tipo de propuestas sobre los siguientes aspectos.: ¿Qué problemas de seguridad identifica en los dos apartados anteriores?. ¿Cómo podría solucionar los problemas identificados?*
 
-Problemas de los servidores:
+Entre los posibles problemas de los servidores tenemos los siguientes:  Autenticación (Man In the Middle)  Falta de cifrado de los datos enviados  Configuración incorrecta puede generar vulnerabilidades (sobreexposición, port scanning, envío de informes falsos, DoS...)  Puerto conocido en ambos casos (NTPsec: 123, rsyslog: 514)
 
 ##### d) *En la plataforma de virtualización corren, entre otros equipos, más de 200 máquinas virtuales para LSI. Como los recursos son limitados, y el disco duro también, identifique todas aquellas acciones que pueda hacer para reducir el espacio de disco ocupado.*
 
@@ -522,3 +592,11 @@ http://10.11.49.47:8000
 ```
 
 Cargamos en Splunk **/var/log/syslog** y **/var/log/apache2/access.log**
+
+Algunos comandos que podemos emplear son:
+
+```comandos_splunk
+source="/var/log/apache2/access.log" | table field1 | iplocation field1 | geostats count
+```
+
+para obtener la localización.
