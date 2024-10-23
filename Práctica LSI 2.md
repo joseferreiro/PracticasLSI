@@ -163,6 +163,7 @@ Expliquemos las opciones del comando:
 1. **-X** -> para usar peticiones GET
 2. **-H** -> para usar peticiones HEAD
 3. **-B** -> para usar peticiones POST
+
 **-o slow-file** -> para indicar que los datos se guardarán en el archivo indicado
 **-r 200** -> Indica el número de conexiones que se establecerán por segundo (200 en este caso)
 **-w 512 -y 1024** -> ventana de la petición inicial + tamaño de los datos posteriores
