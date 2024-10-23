@@ -51,10 +51,15 @@ ettercap -i ens33 -Tq -P repoison_arp -w /home/lsi/Escritorio/archivo -M arp:rem
 A continuación mostramos una breve explicación de las opciones:
 
 **-i ens33** -> Especifica la interfaz de red que empleamos para realizar el ataque, en este caso ens33
+
 **-Tq** -> indica que el comando se ejecuta en modo texto y que no muestre los contenidos por la terminal
+
 **-M arp:remote** -> Indica el ataque a realizar, en este caso un ataque de ARP poisoning entre una máquina y un router
+
 **-P repoison_arp** -> Especifica el plugin que empleamos, en este caso repoison_arp. Este plugin en concreto
+
 **-w /home/lsi/Escritorio/archivo** -> especifica el archivo en el que se guarda la información
+
 **-F** -> Opción no presente en el ejemplo, pero que determina los filtros a aplicar
 
 Los targets se determinan con el formato **Dirección MAC/Dirección IPv4/ Dirección IPv6/Puerto**, por lo que si determinamos el target mediante una dirección IPv4 **y tenemos IPv6 activado** se escribe con /dir IPv4//
@@ -158,18 +163,26 @@ slowhttptest -c 1000 -g -X -o slow-file -r 200 -w 512 -y 1024 -n 5 -z 32 -K 3 -u
 Expliquemos las opciones del comando:
 
 **-c 1000** -> Establece el número de conexiones que se van a realizar, en este caso 1000
+
 **-g** -> Activa la generación de gráficos
+
 **-X** -> Indica el tipo de peticiones HTTP que se van a usar para el ataque. Las opciones son:
 1. **-X** -> para usar peticiones GET
 2. **-H** -> para usar peticiones HEAD
 3. **-B** -> para usar peticiones POST
 
 **-o slow-file** -> para indicar que los datos se guardarán en el archivo indicado
+
 **-r 200** -> Indica el número de conexiones que se establecerán por segundo (200 en este caso)
+
 **-w 512 -y 1024** -> ventana de la petición inicial + tamaño de los datos posteriores
+
 **-n 5** -> intervalo en segundos de lectura de los datos almacenados en el buffer
+
 **-z 32** -> tiempo en segundos para que se cierren las conexiones en caso de inactividad
+
 **-u http:// IPcompañero** -> Dirección del servidor víctima
+
 **-p 3** -> Intervalo en segundos entre peticiones HTTP
 
 Otra herramienta útil es packit, para realizar floodeos sync:
