@@ -156,7 +156,9 @@ scp lsi@ip:/home/lsi/Escritorio/mitrafico.pcap C:/Directiorio/Destino
 
 Y lo analizamos con la herramienta Wireshark.
 
-Para emplear esta herramienta debemos instalar (preferiblemente) la última versión del programa (en nuestro caso mediante el instalador para Windows), y una vez
+Para emplear esta herramienta debemos instalar (preferiblemente) la última versión del programa (en nuestro caso mediante el instalador para Windows)
+
+
 
 ##### f) Mediante arpspoofing entre una máquina objetivo (víctima) y el router del laboratorio obtenga todas las URL HTTP visitadas por la víctima. 
 
@@ -236,7 +238,17 @@ Mientras el compañero tenga el programa en ejecución tendremos total control d
 
 ##### h) Haga un MITM en IPv6 y visualice la paquetería. 
 
+```shell
+ettercap -T -i ens33 -w ip6.cap -M arp /10.11.49.47/fe80::250:56ff:fe97:236// /10.11.48.1//
+```
 
+La dirección IPv6 se obtiene con:
+
+```shell
+ip -6 neighbor show
+```
+
+o con un nmap en ipv6
 
 ##### i) Pruebe alguna herramienta y técnica de detección del sniffing (preferiblemente arpon). 
 
@@ -468,7 +480,7 @@ a2dismod security2
 
 ##### q) Trate de sacar un perfil de los principales sistemas que conviven en su red de prácticas, puertos accesibles, fingerprinting, etc. 
 
-
+Los perfiles que vamos a obtener son los del firewall, el servidor DHCP y la máquina del compañero
 
 ##### r) Realice algún ataque de “password guessing” contra su servidor ssh y compruebe que el analizador de logs reporta las correspondientes alarmas. 
 
@@ -523,12 +535,19 @@ unzip master.zip
 Tras ejecutar el archivo se abre un menú de instalación en el que seleccionaremos las siguientes opciones:
 
 >Se instala en modo local
+>
 >El directorio se mantiene el por defecto
+>
 >Se mandan correos de aviso por e-mail (a lsi@localhost)
+>
 >Se habilita el servidor de integridad
+>
 >Se activa la detección de rootkits
+>
 >Se activa la respuesta activa
+>
 >Desechar en el firewall
+>
 >No se añaden direcciones a la lista blanca
 
 Al seleccionar las opciones pueden salir errores, lo que indica que faltan paquetes. Se instalan y se repite la instalación (si no estás seguro de qué falta, copia el error y pregunta a chatgpt).
@@ -559,7 +578,13 @@ tail /var/ossec/logs/active-responses.log
 
 ##### t) Supongamos que una máquina ha sido comprometida y disponemos de un fichero con sus mensajes de log. Procese dicho fichero con OSSEC para tratar de localizar evidencias de lo acontecido (“post mortem”). Muestre las alertas detectadas con su grado de criticidad, así como un resumen de las mismas.
 
+Para observar las incidencias hacemos:
 
+```shell
+cat /var/log/auth.log | /var/ossec/bin/ossec-logtest -a
+```
+
+Cada alerta tiene asociada un código numérico que valora del 0 al 16 cómo de crítico es el problema.
 ##### Por hacer
 
 **grafana, prometheus, node_exporter**
