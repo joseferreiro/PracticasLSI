@@ -238,17 +238,13 @@ Mientras el compañero tenga el programa en ejecución tendremos total control d
 
 ##### h) Haga un MITM en IPv6 y visualice la paquetería. 
 
-```shell
-ettercap -T -i ens33 -w ip6.cap -M arp /10.11.49.47/fe80::250:56ff:fe97:236// /10.11.48.1//
-```
-
-La dirección IPv6 se obtiene con:
+Lo mejor es hacer:
 
 ```shell
-ip -6 neighbor show
+ettercap -Tq -i ens33 -w ip6.cap -M ndp //IPv6compa/ //::10:11:48:1/
 ```
 
-o con un nmap en ipv6
+asegúrate de que tienes IPv6 activado.
 
 ##### i) Pruebe alguna herramienta y técnica de detección del sniffing (preferiblemente arpon). 
 
@@ -371,9 +367,10 @@ Expliquemos las opciones del comando:
 **-g** -> Activa la generación de gráficos
 
 **-X** -> Indica el tipo de peticiones HTTP que se van a usar para el ataque. Las opciones son:
-1. **-X** -> para usar peticiones GET
-2. **-H** -> para usar peticiones HEAD
-3. **-B** -> para usar peticiones POST
+1. **-X** -> para usar peticiones GET (slow read)
+2. **-H** -> para usar peticiones HEAD (slowloris)
+3. **-B** -> para usar peticiones POST (R-U-DEAD-YET)
+4. **-R** -> Apache killer (manda los mensajes muy fragmentados y con mucha redundancia de datos)
 
 **-o slow-file** -> para indicar que los datos se guardarán en el archivo indicado
 
@@ -476,11 +473,57 @@ a2dismod security2
 3. ¿Puede hacer una transferencia de zona sobre los servidores DNS de la UDC? En caso negativo, obtenga todos los nombres.dominio posibles de la UDC. 
 4. ¿Qué gestor de contenidos se utiliza en www.usc.es? 
 
+Para direccionamiento DNS y MX de la universidad se hace:
 
+```shell
+nslookup udc.es
+```
+
+```shell
+dig NS udc.es
+```
+
+```shell
+dig MX udc.es
+```
+
+Recuerda que tienes que tener instalados los paquetes:
+
+```shell
+apt install dnsutils
+```
 
 ##### q) Trate de sacar un perfil de los principales sistemas que conviven en su red de prácticas, puertos accesibles, fingerprinting, etc. 
 
 Los perfiles que vamos a obtener son los del firewall, el servidor DHCP y la máquina del compañero
+
+Para todas las ips se hace:
+
+```shell
+nmap -A ip
+```
+
+```shell
+nmap -sS -p 1-1024 IP #para tcp
+```
+
+```shell
+nmap -sU -p 1-1024 IP #para udp
+```
+
+Servidor DHCP:
+
+```shell
+nmap -sU -p 67 10.11.48.0/23
+```
+
+Con eso descubrimos que:
+
+**10.11.48.1** tiene el puerto _abierto/filtrado_
+
+**10.11.48.21** tiene el puerto _filtrado_
+
+Asumimos que _el router es el servidor DHCP y la máquina en la que está el firewall_
 
 ##### r) Realice algún ataque de “password guessing” contra su servidor ssh y compruebe que el analizador de logs reporta las correspondientes alarmas. 
 
@@ -586,9 +629,5 @@ cat /var/log/auth.log | /var/ossec/bin/ossec-logtest -a
 
 Cada alerta tiene asociada un código numérico que valora del 0 al 16 cómo de crítico es el problema.
 ##### Por hacer
-
-**grafana, prometheus, node_exporter**
-
-**perfilar con nmap firewall, ip del compañero y servidor DHCP**
 
 **filtro etter para metasploit**
