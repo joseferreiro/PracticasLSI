@@ -338,7 +338,17 @@ De esta forma obtienes las tasas de emisión y recepción en bytes/s y paquetes/
 3. Importe vía grafana el dashboard 1860. 
 4. En los ataques de los apartados m y n busque posibles alteraciones en las métricas visualizadas. 
 
+```shell
+systemctl start grafana-server
+```
 
+Para iniciar el grafana, después en un navegador y con la vpn activada:
+
+```navegador
+http://miIp:3000
+```
+
+La primera vez solicita establecer nombre y contraseña 
 
 ##### m) PARA PLANTEAR DE FORMA TEÓRICA.: ¿Cómo podría hacer un DoS de tipo direct attack contra un equipo de la red de prácticas? ¿Y mediante un DoS de tipo reflective flooding attack? 
 
@@ -628,6 +638,3 @@ cat /var/log/auth.log | /var/ossec/bin/ossec-logtest -a
 ```
 
 Cada alerta tiene asociada un código numérico que valora del 0 al 16 cómo de crítico es el problema.
-##### Por hacer
-
-**filtro etter para metasploit**
