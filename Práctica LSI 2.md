@@ -30,6 +30,16 @@ rsyslog por puerto 514
 
 **WAF** -> Web Application Firewall
 
+**HTTP** -> Protocolo de transferencia de hipertexto por TCP. Puerto 80
+
+**HTTPS** -> Versión segura de HTTP. Puerto 443
+
+**DHCP** -> UDP. Puerto 67
+
+**ARP** -> Address Resolution Protocol
+
+**NDP** -> Neighbour Discovery Protocol
+
 ## Práctica
 
 ##### a) Instale el ettercap y pruebe sus opciones básicas en línea de comando.
@@ -158,8 +168,6 @@ Y lo analizamos con la herramienta Wireshark.
 
 Para emplear esta herramienta debemos instalar (preferiblemente) la última versión del programa (en nuestro caso mediante el instalador para Windows)
 
-
-
 ##### f) Mediante arpspoofing entre una máquina objetivo (víctima) y el router del laboratorio obtenga todas las URL HTTP visitadas por la víctima. 
 
 Ejecutamos ettercap:
@@ -273,13 +281,13 @@ systemctl stop arpon@ens33
 Para escaneo de puertos usaremos nmap:
 
 ```shell
-nmap -sS -p 1-100 IPcompañero
+nmap -sS -p 1-100 IPcompañero #escaneo con SYN, TCP
 ```
 
 o:
 
 ```shell
-nmap -sU -p 1-100 IPcompañero
+nmap -sU -p 1-100 IPcompañero #escaneo UDP
 ```
 
 para escanear los puertos del 1 al 100 de la máquina de nuestro compañero, y:
@@ -377,10 +385,14 @@ Expliquemos las opciones del comando:
 **-g** -> Activa la generación de gráficos
 
 **-X** -> Indica el tipo de peticiones HTTP que se van a usar para el ataque. Las opciones son:
-1. **-X** -> para usar peticiones GET (slow read)
-2. **-H** -> para usar peticiones HEAD (slowloris)
-3. **-B** -> para usar peticiones POST (R-U-DEAD-YET)
-4. **-R** -> Apache killer (manda los mensajes muy fragmentados y con mucha redundancia de datos)
+
+1. **-X** -> para usar peticiones GET (slow read). Se mandan peticiones legítimas, pero se atrasa lo máximo la lectura de las respuestas de forma que se ralentiza el envío del ACK.
+
+3. **-H** -> para usar peticiones HEAD (slowloris). Manda cabeceras HTTP incompletas, por lo que la víctima deja las sesiones abiertas sin considerar las conexiones establecidas.
+
+5. **-B** -> para usar peticiones POST (R-U-DEAD-YET). Manda peticiones POST con un content length mayor del tamaño de los datos que se mandan, obligando a la víctima a seguir esperando sin rechazar la conexión.
+
+7. **-R** -> Apache killer. Manda los mensajes muy fragmentados y con superposición de los datos para agotar los recursos de la víctima.
 
 **-o slow-file** -> para indicar que los datos se guardarán en el archivo indicado
 
